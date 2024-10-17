@@ -3,6 +3,8 @@ import numpy as np
 import os
 import cv2
 import datetime
+from access_control import authenticate_user, create_teacher, add_student_to_teacher_class, users, admin_role, teacher_role, initialize_admin 
+
 
 
 def capture_new_image():
@@ -166,24 +168,65 @@ def detect_faces():
     cv2.destroyAllWindows()
 
 
+
+def admin_menu():
+    while True:
+        print("\nAdmin Menu:")
+        print("1. Create new teacher")
+        print("2. Exit")
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            username = input("Enter new teacher's username: ")
+            password = input("Enter new teacher's password: ")
+            create_teacher(username, password)
+        elif choice == '2':
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+def teacher_menu(user):
+    while True:
+        print("\nTeacher Menu:")
+        print("1. Add student to class")
+        print("2. Check attendance")
+        print("3. Exit")
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            student_name = input("Enter student's name: ")
+            add_student_to_teacher_class(user.username, student_name)
+        elif choice == '2':
+            print("Attendance checking feature is not implemented yet.")
+        elif choice == '3':
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
 if __name__ == "__main__":
+    initialize_admin()  # Ensure at least one admin exists
+    print("Current users:", [(user.username, user.role.name) for user in users])  # Debugging line 
     while True:
         print("\nChoose an option:")
-        print("1. Capture image")
-        print("2. Detect face")
-        print("3. Delete face")
-        print("4. End program")
+        print("1. Login")
+        print("2. Exit")
 
         choice = input("Enter your choice: ")
 
         if choice == '1':
-            capture_new_image()
+            username = input("Enter username: ")
+            password = input("Enter password: ")
+            user = authenticate_user(username, password)
+
+            if user:
+                print(f"Welcome, {user.username}!")
+                if user.role == admin_role:
+                    admin_menu()
+                elif user.role == teacher_role:
+                    teacher_menu(user)
+            else:
+                print("Invalid username or password.")
         elif choice == '2':
-            detect_faces()
-        elif choice == '3':
-            filename = input("Enter the filename to delete: ")
-            delete_single_image(filename)
-        elif choice == '4':
             break
         else:
             print("Invalid choice. Please try again.")
