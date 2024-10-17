@@ -83,86 +83,88 @@ def delete_single_image(filename):
         print("Image not found.")
 
 def detect_faces():
-  """
-  Detects faces in a video stream captured from the webcam.
-  Displays the video with bounding boxes and names around detected faces.
-  Saves the detected images with timestamps in the "Attendances" folder.
-  """
-  # Get the encoded faces data
-  faces = encode_faces()
-  encoded_faces = list(faces.values())
-  faces_name = list(faces.keys())
+    """
+    Detects faces in a video stream captured from the webcam.
+    Displays the video with bounding boxes and names around detected faces.
+    Saves the detected images with timestamps in the "Attendances" folder.
+    """
+    # Get the encoded faces data
+    faces = encode_faces()
+    encoded_faces = list(faces.values())
+    faces_name = list(faces.keys())
 
-  video_frame = True
-  # Capture video from webcam
-  video = cv2.VideoCapture(0)
+    video_frame = True
+    # Capture video from webcam
+    video = cv2.VideoCapture(0)
 
-  # Create the "Attendances" folder if it doesn't exist
-  os.makedirs("Attendances", exist_ok=True)
+    # Create the "Attendances" folder if it doesn't exist
+    os.makedirs("Attendances", exist_ok=True)
 
-  # Keep track of detected faces for the current day
-  today = datetime.date.today()
-  detected_faces_today = set()
+    # Keep track of detected faces for the current day
+    today = datetime.date.today()
+    detected_faces_today = set()
 
-  # Open the log file in append mode
-  with open("detected_faces.txt", "a") as f:
-    while True:
-      ret, frame = video.read()
+    # Open the log file in append mode
+    with open("detected_faces.txt", "a") as f:
+        while True:
+            ret, frame = video.read()
 
-      if video_frame:
-        # Find face locations in the frame
-        face_locations = fr.face_locations(frame)
-        # Get encodings for the detected faces
-        unknown_face_encodings = fr.face_encodings(frame, face_locations)
+            if video_frame:
+                # Find face locations in the frame
+                face_locations = fr.face_locations(frame)
+                # Get encodings for the detected faces
+                unknown_face_encodings = fr.face_encodings(frame, face_locations)
 
-        face_names = []
-        for face_encoding in unknown_face_encodings:
-          # Compare faces with known encodings
-          matches = fr.compare_faces(encoded_faces, face_encoding)
-          name = "Unknown"
+                face_names = []
+                for face_encoding in unknown_face_encodings:
+                    # Compare faces with known encodings
+                    matches = fr.compare_faces(encoded_faces, face_encoding)
+                    name = "Unknown"
 
-          # Find the closest match
-          face_distances = fr.face_distance(encoded_faces, face_encoding)
-          best_match_index = np.argmin(face_distances)
-          if matches[best_match_index]:
-            name = faces_name[best_match_index]
+                    # Find the closest match
+                    face_distances = fr.face_distance(encoded_faces, face_encoding)
+                    best_match_index = np.argmin(face_distances)
+                    if matches[best_match_index]:
+                        name = faces_name[best_match_index]
 
-          face_names.append(name)
+                    face_names.append(name)
 
-        # Get current date and time
-        now = datetime.datetime.now()
-        timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
+                # Get current date and time
+                now = datetime.datetime.now()
+                timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-        # Save detected image with timestamp if not already detected for today
-        for (top, right, bottom, left), name in zip(face_locations, face_names):
-          filename = f"{timestamp}_{name}.jpg"
-          filepath = os.path.join("Attendances", filename)
-          if name not in detected_faces_today:
-            cv2.imwrite(filepath, frame[top:bottom, left:right])
-            detected_faces_today.add(name)
+                # Save detected image with timestamp if not already detected for today
+                for (top, right, bottom, left), name in zip(face_locations, face_names):
+                    # Only record attendance for known faces
+                    if name != "Unknown" and name not in detected_faces_today:
+                        filename = f"{timestamp}_{name}.jpg"
+                        filepath = os.path.join("Attendances", filename)
+                        cv2.imwrite(filepath, frame[top:bottom, left:right])
+                        detected_faces_today.add(name)
 
-            # Write details to the log file
-            f.write(f"Attendance recorded for {name} at {timestamp}\n")
+                        # Write details to the log file
+                        f.write(f"Attendance recorded for {name} at {timestamp}\n")
 
-            # Display the attendance record in the console
-            print(f"Attendance recorded for {name} at {timestamp}")
+                        # Display the attendance record in the console
+                        print(f"Attendance recorded for {name} at {timestamp}")
 
-        # Draw bounding boxes and names around detected faces
-        for (top, right, bottom, left), name in zip(face_locations, face_names):
-          cv2.rectangle(frame, (left-20, top-20), (right+20, bottom+20), (0, 255, 0), 2)
-          cv2.rectangle(frame, (left-20, bottom -15), (right+20, bottom+20), (0, 255, 0), cv2.FILLED)
-          font = cv2.FONT_HERSHEY_DUPLEX
-          cv2.putText(frame, name, (left -20, bottom + 15), font, 0.85, (255, 255, 255), 2)
+                # Draw bounding boxes and names around detected faces
+                for (top, right, bottom, left), name in zip(face_locations, face_names):
+                    cv2.rectangle(frame, (left-20, top-20), (right+20, bottom+20), (0, 255, 0), 2)
+                    cv2.rectangle(frame, (left-20, bottom -15), (right+20, bottom+20), (0, 255, 0), cv2.FILLED)
+                    font = cv2.FONT_HERSHEY_DUPLEX
+                    cv2.putText(frame, name, (left -20, bottom + 15), font, 0.85, (255, 255, 255), 2)
 
-        # Display the video frame
-        cv2.imshow('Video', frame)
+                # Display the video frame
+                cv2.imshow('Video', frame)
 
-      # Handle user input
-      key = cv2.waitKey(1) & 0xFF
-      if key == ord('s'):
-        break  # Stop face detection
+            # Handle user input
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('s'):
+                break  # Stop face detection
 
-  cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     while True:
