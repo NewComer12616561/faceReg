@@ -1,3 +1,5 @@
+import json
+
 class Role:
     def __init__(self, name):
         self.name = name
@@ -13,6 +15,14 @@ class User:
         self.password = password
         self.role = role
 
+    def to_dict(self):
+        return {
+            "username": self.username,
+            "password": self.password,
+            "role": self.role.name
+        }
+
+# Define roles
 admin_role = Role("Admin")
 teacher_role = Role("Teacher")
 
@@ -40,15 +50,31 @@ def create_teacher(username, password):
     new_teacher = User(username, password, teacher_role)
     users.append(new_teacher)
     print(f"Teacher {username} created successfully.")
-
-def add_student_to_teacher_class(teacher_username, student_name):
-    # This function would ideally add the student to the teacher's class
-    print(f"Student {student_name} added to {teacher_username}'s class.")
+    save_users_to_file()  # Save the updated user list to the file
 
 def create_admin(username, password):
     new_admin = User(username, password, admin_role)
     users.append(new_admin)
     print(f"Admin {username} created successfully.")
+
+def save_users_to_file(filename='users.json'):
+    with open(filename, 'w') as f:
+        json.dump([user.to_dict() for user in users], f)
+
+def load_users_from_file(filename='users.json'):
+    global users
+    try:
+        with open(filename, 'r') as f:
+            user_data = json.load(f)
+            for data in user_data:
+                role = admin_role if data['role'] == 'Admin' else teacher_role
+                user = User(data['username'], data['password'], role)
+                users.append(user)
+    except FileNotFoundError:
+        print("User data file not found. Starting with an empty user list.")
+
+def add_student_to_teacher_class(teacher_username, student_name):
+    print(f"Student {student_name} added to {teacher_username}'s class.")        
 
 def initialize_admin():
     # Pre-defined admin credentials

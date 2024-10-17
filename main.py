@@ -3,8 +3,17 @@ import numpy as np
 import os
 import cv2
 import datetime
-from access_control import authenticate_user, create_teacher, add_student_to_teacher_class, users, admin_role, teacher_role, initialize_admin 
-
+from access_control import (
+    authenticate_user,
+    create_teacher,
+    add_student_to_teacher_class,
+    users,
+    admin_role,
+    teacher_role,
+    initialize_admin,
+    load_users_from_file,
+    save_users_to_file
+)
 
 
 def capture_new_image():
@@ -205,6 +214,7 @@ def teacher_menu(user):
 
 if __name__ == "__main__":
     initialize_admin()  # Ensure at least one admin exists
+    load_users_from_file() 
     print("Current users:", [(user.username, user.role.name) for user in users])  # Debugging line 
     while True:
         print("\nChoose an option:")
